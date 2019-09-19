@@ -1,3 +1,4 @@
+
 // ADCTestMain.c
 // Runs on TM4C123
 // This program periodically samples ADC channel 0 and stores the
@@ -25,6 +26,7 @@
 // center of X-ohm potentiometer connected to PE3/AIN0
 // bottom of X-ohm potentiometer connected to ground
 // top of X-ohm potentiometer connected to +3.3V 
+/*
 #include <stdint.h>
 #include "../inc/ADCSWTrigger.h"
 #include "../inc/tm4c123gh6pm.h"
@@ -118,7 +120,7 @@ void Timer2A_Handler(void){
 	i = i * 5 + (i + 3) / 17;
 	
 }
-
+*/
 /*int uselessMethodCall(int x){
 	int a = 0;
 	int b = 1;
@@ -137,7 +139,7 @@ void Timer2A_Handler(void){
 }
 */
 
-
+/*
 int main(void){
 //int test = uselessMethodCall(100);
 	PLL_Init(Bus80MHz);                   // 80 MHz
@@ -198,5 +200,5 @@ int main(void){
 	
 	
 }
-
+*/
 

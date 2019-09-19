@@ -28,7 +28,6 @@ int main(){
     second = (ttime/1000)%60;
     minute = (ttime/60000)%60;
     hour = (ttime/3600000)%24;
-    
     Face_SetTime(hour,minute,second,ms);
     Face_Out();
 		//if(Stopwatch Mode)		
@@ -37,6 +36,7 @@ int main(){
     else ST7735_DrawPixel(1,1,ST7735_BLUE);
 		
 		//if(Timer Mode)
+    
 		
 		
 	}

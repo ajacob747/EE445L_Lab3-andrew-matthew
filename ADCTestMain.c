@@ -30,6 +30,7 @@
 #include "../inc/tm4c123gh6pm.h"
 #include "../inc/PLL.h"
 #include "../inc/ST7735.h"
+#include "face.h"
 
 #define PF2             (*((volatile uint32_t *)0x40025010))
 #define PF1             (*((volatile uint32_t *)0x40025008))
@@ -137,7 +138,8 @@ void Timer2A_Handler(void){
 }
 */
 
-
+void draw_face(void);
+void draw_7seg(void);
 int main(void){
 //int test = uselessMethodCall(100);
 	PLL_Init(Bus80MHz);                   // 80 MHz

@@ -20,9 +20,9 @@ void Switch_PortFInit(void){
   GPIO_PORTF_AFSEL_R = 0x00;        // 6) disable alt funct on PF7-0
   GPIO_PORTF_PUR_R = 0x11;          // enable pull-up on PF0 and PF4
   GPIO_PORTF_DEN_R = 0x1F;          // 7) enable digital I/O on PF4-0
-	GPIO_PORTF_IS_R &= ~0x11;     // (d) PF4/F1 is edge-sensitive
-  GPIO_PORTF_IBE_R &= ~0x11;    //     PF4/F1 is not both edges
-  GPIO_PORTF_IEV_R |= 0x11;    //     PF4/F1 falling edge event
+	GPIO_PORTF_IS_R &= ~0x11;     // (d) PF4/F0 is edge-sensitive
+  GPIO_PORTF_IBE_R &= ~0x11;    //     PF4/F0 is not both edges
+  GPIO_PORTF_IEV_R |= 0x11;    //     PF4/F0 falling edge event
   GPIO_PORTF_ICR_R = 0x11;      // (e) clear flag4/flag0
   GPIO_PORTF_IM_R |= 0x11;      // (f) arm interrupt on PF4/PF0
   NVIC_PRI7_R = (NVIC_PRI7_R&0xFF00FFFF)|0x00A00000; // (g) priority 5

@@ -1,6 +1,7 @@
 #include "Switch.h"
 #include "Speaker.h"
 #include "Timer.h"
+#include "Face.h"
 #include "../inc/tm4c123gh6pm.h"
 #include "../inc/PLL.h"
 

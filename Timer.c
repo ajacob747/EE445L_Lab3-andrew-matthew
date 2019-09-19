@@ -3,9 +3,10 @@
 #include "../inc/tm4c123gh6pm.h"
 #include "Timer.h"
 
-uint32_t time=0;
+uint32_t time;
 
 void DisableInterrupts(void); 
+void EnableInterrupts(void);
 
 void Timer_Init(void){
   volatile uint32_t delay;
@@ -26,6 +27,9 @@ void Timer_Init(void){
                                    // Timer0A=priority 2
   NVIC_PRI4_R = (NVIC_PRI4_R&0x00FFFFFF)|0x40000000; // top 3 bits
   NVIC_EN0_R = 1<<19;              // enable interrupt 19 in NVIC
+	time = 0;
+	EnableInterrupts();
+	
 }
 
 void Timer0A_Handler(void){

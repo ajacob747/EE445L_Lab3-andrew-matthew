@@ -1,15 +1,13 @@
 //Initializes Timer and sets interrupt
 #include <stdint.h>
 #include "../inc/tm4c123gh6pm.h"
-#include "../inc/PLL.h"
-#include "../inc/ST7735.h"
 #include "Timer.h"
 
 uint32_t time=0;
 
 void DisableInterrupts(void); 
 
-void Timer_Init(void){
+void Timer0A_Init(void){
   volatile uint32_t delay;
   DisableInterrupts();
   // **** general initialization ****
@@ -20,7 +18,7 @@ void Timer_Init(void){
   // **** timer0A initialization ****
                                    // configure for periodic mode
   TIMER0_TAMR_R = TIMER_TAMR_TAMR_PERIOD;
-  TIMER0_TAILR_R = 79999;         // start value for 100 Hz interrupts
+  TIMER0_TAILR_R = 79999;         // start value for 1 kHz interrupts
   TIMER0_IMR_R |= TIMER_IMR_TATOIM;// enable timeout (rollover) interrupt
   TIMER0_ICR_R = TIMER_ICR_TATOCINT;// clear timer0A timeout flag
   TIMER0_CTL_R |= TIMER_CTL_TAEN;  // enable timer0A 32-b, periodic, interrupts
@@ -30,7 +28,7 @@ void Timer_Init(void){
   NVIC_EN0_R = 1<<19;              // enable interrupt 19 in NVIC
 }
 
-void Timer_Handler(void){
+void Timer0A_Handler(void){
 	TIMER0_ICR_R = TIMER_ICR_TATOCINT; 
 	time++;
 }

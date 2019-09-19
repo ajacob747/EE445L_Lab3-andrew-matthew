@@ -7,7 +7,7 @@ uint32_t time=0;
 
 void DisableInterrupts(void); 
 
-void Timer0A_Init(void){
+void Timer_Init(void){
   volatile uint32_t delay;
   DisableInterrupts();
   // **** general initialization ****

@@ -25,8 +25,16 @@ void Face_Label(char* n);
 // Output:  none
 void Face_ShowAlarm(int on);
 
+// --------Face_SetAlarm--------
+// Sets current alarm time, expects 24 hr time
+// Input:   h     hour
+//          m     minute
+//
+// Output:  none
+void Face_SetAlarm(int h, int m);
+
 // --------Face_SetTime--------
-// Sets current time for face to display
+// Sets current time for face to display, expects 24 hr time
 // Input:   h     hour
 //          m     minute
 //          s     second

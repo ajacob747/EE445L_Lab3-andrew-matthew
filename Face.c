@@ -36,7 +36,7 @@ static int clock_alarm = ST7735_RED;
 static int seg_on = ST7735_YELLOW;
 static int seg_off = GRAY;
 
-
+void draw_face(void);
 
 // --------Face_Init--------
 // Initializes clock face, clears screen, draws clock
@@ -53,6 +53,7 @@ void Face_Init(void){
   label[18] = '\0';
   ST7735_InitR(INITR_REDTAB);
   Output_Clear();
+  draw_face();
 }
 
 // --------Face_SetLabel--------
@@ -225,9 +226,9 @@ int lastAlarm = 0;
 // Draw hands if they move or if there's an overlap that needs to be resolved
 static void draw_hands(void){
   // hand angles
-  int hourA = (hour%12) * 6 + min / 10;
+  int hourA = (hour%12)*5 * 6 + min / 2;
   int minA = min * 6 + sec / 10;
-  int secA = sec + (ms * 3) / 500;
+  int secA = sec * 6 + (ms * 3) / 500;
   int alarmA = (alarmH % 12) * 6 + alarmM / 10;
   if (refreshAlarm || alarmA != lastAlarm){
     if (overlap(lastAlarm, lastHour)) refreshHour = 1;
@@ -318,8 +319,10 @@ static void draw_7seg(void){
   if (twentyFourHour){
     print = hour / 10;
   } else {
-    if (print > 12)
+    if (hour > 12)
       ST7735_DrawPixel(ofst - 2, SEG_Y + 9, seg_on);
+    else
+      ST7735_DrawPixel(ofst - 2, SEG_Y + 9, seg_off);
     print = (hour%12) / 10;
     if (!print) print = 10; //10 is special case blank digit
   }
@@ -379,7 +382,6 @@ static void draw_seconds(void) {
 
 void Face_Out(void){
   //draw_label();
-  draw_face();
   draw_hands();
   draw_7seg();
   //draw_seconds();

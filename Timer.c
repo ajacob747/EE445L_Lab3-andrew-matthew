@@ -29,12 +29,11 @@ void Timer_Init(void){
   NVIC_EN0_R = 1<<19;              // enable interrupt 19 in NVIC
 	time = 0;
 	EnableInterrupts();
-	
-}
 
+}
 void Timer0A_Handler(void){
 	TIMER0_ICR_R = TIMER_ICR_TATOCINT; 
-	time++;
+	time+=200;
 }
 
 uint32_t Timer_getTime(){

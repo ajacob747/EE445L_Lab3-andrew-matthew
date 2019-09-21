@@ -5,6 +5,7 @@
 #include "../inc/ST7735.h"
 #include "Face.h"
 #include "string.h"
+#include "stdio.h"
 
 // redraw item flags
 static short refreshLabel;
@@ -21,16 +22,21 @@ static int hour;
 static int min;
 static int sec;
 static int ms;
-static short alarm;
-static short twentyFourHour;
+static int alarmH;
+static int alarmM;
+static short twentyFourHour = 0;
 
+#define GRAY 0x2104
 // current clock colors
 static int clock_bg = ST7735_BLUE;
 static int clock_outline = ST7735_RED;
 static int clock_hand = ST7735_BLACK;
 static int clock_alarm = ST7735_RED;
 
+static int seg_on = ST7735_YELLOW;
+static int seg_off = GRAY;
 
+void draw_face(void);
 
 // --------Face_Init--------
 // Initializes clock face, clears screen, draws clock
@@ -47,6 +53,7 @@ void Face_Init(void){
   label[18] = '\0';
   ST7735_InitR(INITR_REDTAB);
   Output_Clear();
+  draw_face();
 }
 
 // --------Face_SetLabel--------
@@ -71,6 +78,17 @@ void Face_SetLabel(char* n){
 void Face_ShowAlarm(int on){
 }
 
+// --------Face_SetAlarm--------
+// Sets current alarm time, expects 24 hr time
+// Input:   h     hour
+//          m     minute
+//
+// Output:  none
+void Face_SetAlarm(int h, int m){
+  alarmH = h;
+  alarmM = m;
+}
+
 // --------Face_SetTime--------
 // Sets current time for face to display
 // Input:   h     hour
@@ -80,9 +98,9 @@ void Face_ShowAlarm(int on){
 // Output: none       
 
 void Face_SetTime(int h, int m, int s, int millis){
-  hour = h * 6 + m / 10;
-  min = m * 6 + s / 10;
-  sec = s * 6;
+  hour = h;
+  min = m;
+  sec = s;
   ms = millis;
 }
 
@@ -146,6 +164,24 @@ void draw_face(void){
   }
 }
 
+// Below is a segment of code useful for testing draw_hand
+  /*sec = 85;
+  min = 0;
+  hour = 0;
+  alarm = 45;
+  while(1){
+    sec++;
+    if (sec%2) min++;
+    if (min%3 == 1) hour = (hour + 1) % 360;
+    sec = sec%360;
+    min = min%360;
+    draw_hands();
+    //refreshSec = 1;
+    //refreshMin = 1;
+    //refreshHour = 1;
+    //refreshAlarm = 1;
+  }*/
+
 // Precalculated hand positions - done via trigonometry. There are 91 entries in the array, for 0 - 90 degrees.
 // To calculate a hand position: given a degree between 0 and 90, 
 // the y position is arr[deg]
@@ -187,63 +223,153 @@ int lastSec = 0;
 int lastAlarm = 0;
 
 #define overlap(a,b) ((a - b) < 10 && (a - b) > -10)
-
+// Draw hands if they move or if there's an overlap that needs to be resolved
 static void draw_hands(void){
-  if (refreshAlarm || alarm != lastAlarm){
+  // hand angles
+  int hourA = (hour%12)*5 * 6 + min / 2;
+  int minA = min * 6 + sec / 10;
+  int secA = sec * 6 + (ms * 3) / 500;
+  int alarmA = (alarmH % 12) * 6 + alarmM / 10;
+  if (refreshAlarm || alarmA != lastAlarm){
     if (overlap(lastAlarm, lastHour)) refreshHour = 1;
     if (overlap(lastAlarm, lastMin)) refreshMin = 1;
     if (overlap(lastAlarm, lastSec)) refreshSec = 1;
     hand_helper(s_arr, lastAlarm, clock_bg);
-    hand_helper(s_arr, alarm, clock_alarm);
-    lastAlarm = alarm;
+    hand_helper(s_arr, alarmA, clock_alarm);
+    lastAlarm = alarmA;
     refreshAlarm = 0;
   }
-  if (refreshSec || sec != lastSec){
+  if (refreshSec || secA != lastSec){
     if (overlap(lastSec, lastHour)) refreshHour = 1;
     if (overlap(lastSec, lastMin)) refreshMin = 1;
     if (overlap(lastSec, lastAlarm)) refreshAlarm = 1;
     hand_helper(s_arr, lastSec, clock_bg);
-    hand_helper(s_arr, sec, clock_hand);
-    lastSec = sec;
+    hand_helper(s_arr, secA, clock_hand);
+    lastSec = secA;
     refreshSec = 0;
   }
-  if (refreshMin || min != lastMin){
+  if (refreshMin || minA != lastMin){
     if (overlap(lastMin, lastHour)) refreshHour = 1;
     if (overlap(lastMin, lastAlarm)) refreshAlarm = 1;
     if (overlap(lastMin, lastSec)) refreshSec = 1;
     hand_helper(m_arr, lastMin, clock_bg);
-    hand_helper(m_arr, min, clock_hand);
-    lastMin = min;
+    hand_helper(m_arr, minA, clock_hand);
+    lastMin = minA;
     refreshMin = 0;
   }
-  if (refreshHour || hour != lastHour){
+  if (refreshHour || hourA != lastHour){
     if (overlap(lastHour, lastAlarm)) refreshAlarm = 1;
     if (overlap(lastHour, lastMin)) refreshMin = 1;
     if (overlap(lastHour, lastSec)) refreshSec = 1;
     hand_helper(h_arr, lastHour, clock_bg);
-    hand_helper(h_arr, hour, clock_hand);
-    lastHour = hour;
+    hand_helper(h_arr, hourA, clock_hand);
+    lastHour = hourA;
     refreshHour = 0;
   }
 }
 
-void draw_7seg(void){
-  sec = 85;
-  min = 0;
-  hour = 0;
-  alarm = 45;
-  while(1){
-    sec++;
-    if (sec%2) min++;
-    if (min%3 == 1) hour = (hour + 1) % 360;
-    sec = sec%360;
-    min = min%360;
-    draw_hands();
-    //refreshSec = 1;
-    //refreshMin = 1;
-    //refreshHour = 1;
-    //refreshAlarm = 1;
+
+/*    0
+    _____
+   |     |
+  1|  3  |2
+    -----
+   |     |
+  4|_____|5
+      6
+*/
+#define SEGLENGTH 5
+static const int seg_arr[] = {0x77, 0x24, 0x5D, 0x6D, 0x2E, 0x6B, 0x7B, 0x25, 0x7F, 0x6F, 0x00};
+static void seg_help(int x, int y, int out, int on, int off){
+  int digit = seg_arr[out%11];
+  int color;
+  // seg 0
+  color = (digit%2)?on:off;
+  ST7735_DrawFastHLine(x + 1, y, SEGLENGTH, color);
+  digit>>=1;
+  
+  // seg 1 (you get the drill)
+  color = (digit%2)?on:off;
+  ST7735_DrawFastVLine(x, y + 1, SEGLENGTH, color);
+  digit>>=1;
+  color = (digit%2)?on:off;
+  ST7735_DrawFastVLine(x + 1 + SEGLENGTH, y + 1, SEGLENGTH, color);
+  digit>>=1;
+  color = (digit%2)?on:off;
+  ST7735_DrawFastHLine(x + 1, y + 1 + SEGLENGTH, SEGLENGTH, color);
+  digit>>=1;
+  color = (digit%2)?on:off;
+  ST7735_DrawFastVLine(x, y + 2 + SEGLENGTH, SEGLENGTH, color);
+  digit>>=1;
+  color = (digit%2)?on:off;
+  ST7735_DrawFastVLine(x + 1 + SEGLENGTH, y + 2 + SEGLENGTH, SEGLENGTH, color);
+  digit>>=1;
+  color = (digit%2)?on:off;
+  ST7735_DrawFastHLine(x + 1, y + 2 + 2 * SEGLENGTH, SEGLENGTH, color);
+  digit>>=1;
+  
+}
+
+#define SEG_Y 140
+static void draw_7seg(void){
+  // hour digit 1 is a special case: it can print a blank
+  // if it's 12 hour, print am/pm dot. otherwise, use 24 hour time
+  int print;
+  int ofst = 12;
+  if (twentyFourHour){
+    print = hour / 10;
+  } else {
+    if (hour > 12)
+      ST7735_DrawPixel(ofst - 2, SEG_Y + 9, seg_on);
+    else
+      ST7735_DrawPixel(ofst - 2, SEG_Y + 9, seg_off);
+    print = (hour%12) / 10;
+    if (!print) print = 10; //10 is special case blank digit
   }
+  seg_help(ofst, SEG_Y, print, seg_on, seg_off);
+  ofst += SEGLENGTH + 4;
+  
+  print = hour % 10;
+  seg_help(ofst, SEG_Y, print, seg_on, seg_off);
+  ofst += SEGLENGTH + 2;
+  
+  ST7735_DrawPixel(ofst, SEG_Y + 3, seg_on);
+  ST7735_DrawPixel(ofst, SEG_Y + 9, seg_on);
+  ofst += 2;
+  
+  print = min/10;
+  seg_help(ofst, SEG_Y, print, seg_on, seg_off);
+  ofst += SEGLENGTH + 4;
+  
+  print = min%10;
+  seg_help(ofst, SEG_Y, print, seg_on, seg_off);
+  ofst += SEGLENGTH + 4;
+  
+  ST7735_DrawPixel(ofst, SEG_Y + 3, seg_on);
+  ST7735_DrawPixel(ofst, SEG_Y + 9, seg_on);
+  ofst += 2;
+  
+  print = sec/10;
+  seg_help(ofst, SEG_Y, print, seg_on, seg_off);
+  ofst += SEGLENGTH + 4;
+  
+  print = sec%10;
+  seg_help(ofst, SEG_Y, print, seg_on, seg_off);
+  ofst += SEGLENGTH + 4;
+  
+  ST7735_DrawPixel(ofst, SEG_Y + 9, seg_on);
+  ofst += 2;
+  
+  print = ms/100;
+  seg_help(ofst, SEG_Y, print, seg_on, seg_off);
+  ofst += SEGLENGTH + 4;
+  
+  print = (ms/10)%10;
+  seg_help(ofst, SEG_Y, print, seg_on, seg_off);
+  ofst += SEGLENGTH + 4;
+  
+  print = ms%10;
+  seg_help(ofst, SEG_Y, print, seg_on, seg_off);
 }
 
 static void draw_seconds(void) {
@@ -255,9 +381,8 @@ static void draw_seconds(void) {
 // Output:  none
 
 void Face_Out(void){
-  draw_label();
-  draw_face();
+  //draw_label();
   draw_hands();
   draw_7seg();
-  draw_seconds();
+  //draw_seconds();
 }

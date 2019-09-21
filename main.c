@@ -5,6 +5,8 @@
 #include "../inc/tm4c123gh6pm.h"
 #include "../inc/PLL.h"
 
+#define PF2   (*((volatile uint32_t *)0x40025010))
+
 int main(){
 	PLL_Init(Bus80MHz); 
 	Switch_PortFInit();

@@ -7,6 +7,8 @@
 #include "../inc/st7735.h"
 
 
+void EnableInterrupts(void);
+
 int time_ofst = 0;
 int showAlarm;
 int is24Hr;
@@ -57,9 +59,10 @@ int main(){
   showAlarm = 0;
   is24Hr = 0;
   ring = 0;
+	EnableInterrupts();
 	while(1){
 
-    PF2 ^= PF2;
+    PF2 ^= 0x04;
     if (showAlarm){
       if (alarmH == (time+time_ofst)%3600000 && alarmM == (time+time_ofst)%60000 && (time+time_ofst)%1000 < 500)
         ring = 1;
@@ -69,6 +72,9 @@ int main(){
         ring = 1;
     }
     if (ring && (PE1Flag || PF0Flag || PF4Flag)){
+			PE1Flag = 0;
+			PF0Flag = 0;
+			PF4Flag = 0;
       ring = 0;
       Face_Ring(0);
     }
@@ -82,11 +88,12 @@ int main(){
       mode = (mode + 1)%5;
       delay = 100000;
       refresh = 1;
+			PF4Flag = 0;
     }
-    if (delay == 0){
+    if (delay < time){
       mode = 0;
       refresh = 1;
-    } else delay--;
+    };
     //return to main clock if uninteractive
     int displayTime;
     switch(mode){
@@ -100,6 +107,8 @@ int main(){
         displayTime = time_ofst + time;
         Face_SetTimeMS(displayTime);
         Face_Out(0);
+				PE1Flag = 0;
+				PF0Flag = 0;
         break;
       case 1: // set time
         if (refresh){
@@ -109,22 +118,34 @@ int main(){
         }
         switch(setPhase){
           case 0: //set hour
-            if (PE1Flag) time_ofst += 3600000;
+            if (PE1Flag){
+							time_ofst += 3600000;
+							PE1Flag = 0;
+						}
             if (PF0Flag){
               setPhase++;
               Face_SetLabel("Set Minute");
+							PF0Flag = 0;
             }
             break;
           case 1: //set min
-            if (PE1Flag) time_ofst += 60000;
+            if (PE1Flag){
+							time_ofst += 60000;
+							PE1Flag = 0;
+						}
             if (PF0Flag){
+							PF0Flag = 0;
               setPhase++;
               Face_SetLabel("Set Second to 0");
             }
             break;
           case 2: //reset sec to 0
-            if (PE1Flag) time_ofst %= 60000;
+            if (PE1Flag){
+							time_ofst %= 60000;
+							PE1Flag = 0;
+						}
             if (PF0Flag){
+							PF0Flag = 0;
               setPhase++;
             }
             break;
@@ -133,10 +154,12 @@ int main(){
               Face_SetLabel("Show 24h time? (Y)");
             } else Face_SetLabel("Show 24h time? (N)");
             if (PE1Flag){
+							PE1Flag = 0;
               is24Hr = !is24Hr;
               Face_Set24(is24Hr);
             }
             if (PF0Flag){
+							PF0Flag = 0;
               setPhase = 0;
               Face_SetLabel("Set Hour");
             }
@@ -150,32 +173,44 @@ int main(){
           if (showAlarm) Face_SetLabel("Alarm on");
           else Face_SetLabel("Alarm off");
           alarmPhase = 0;
+					refresh = 0;
         }
         switch(alarmPhase){
           case 0:
             if (PE1Flag){
+							PE1Flag = 0;
               showAlarm = !showAlarm;
               if (showAlarm) Face_SetLabel("Alarm on");
               else Face_SetLabel("Alarm off");
             }
             if (PF0Flag){
+							PF0Flag = 0;
               alarmPhase++;
               Face_SetLabel("Set Alarm Hour");
             }
             break;
           case 1:
             if (PE1Flag){
-              alarmH = alarmH % 24;
+							PE1Flag = 0;
+              alarmH = (alarmH + 1) % 24;
             }
             if (PF0Flag){
+							PF0Flag = 0;
               alarmPhase++;
               Face_SetLabel("Set Alarm Min");
             }
             break;
           case 2:
             if (PE1Flag){
-              alarmM = alarmM % 60;
+							PE1Flag = 0;
+              alarmM = (alarmM + 1) % 60;
             }
+						if (PF0Flag) {
+							PF0Flag = 0;
+							alarmPhase = 0;
+							if (showAlarm) Face_SetLabel("Alarm on");
+              else Face_SetLabel("Alarm off");
+						}
             break;
         }
         Face_SetTime(alarmH,alarmM,0,0);
@@ -190,10 +225,12 @@ int main(){
           else Face_SetLabel("Timer Off");
           Face_ShowAlarm(0);
           setPhase = 0;
+					refresh = 0;
         }
         switch(setPhase){
           case 0: //toggle timer
             if (PE1Flag){
+							PE1Flag = 0;
               tm_on = !tm_on;
               if (tm_on)
                 Face_SetLabel("Timer On");
@@ -203,15 +240,18 @@ int main(){
               tm_end = tm_h * 3600000 + tm_m * 60000;
             }
             if (PF0Flag){
+							PF0Flag = 0;
               setPhase++;
               Face_SetLabel("Set Timer H");
             }
             break;
           case 1:
             if (PE1Flag){
+							PE1Flag = 0;
               tm_h = tm_h%24;
             }
             if (PF0Flag){
+							PF0Flag = 0;
               setPhase++;
               Face_SetLabel("Set Timer Hour");
             }
@@ -219,9 +259,11 @@ int main(){
             break;
           case 2:
             if (PE1Flag){
+							PE1Flag = 0;
               tm_m = tm_m%60;
             }
             if (PF0Flag) {
+							PF0Flag = 0;
               setPhase++;
               Face_SetLabel("Set Timer Minute");
             }
@@ -229,13 +271,16 @@ int main(){
             break;
         }
         Face_SetTimeMS(time - (tm_start + tm_end));
+				Face_Out(0);
         break;
       case 4: 
         if (refresh){
           Face_SetLabel("Stopwatch");
           Face_ShowAlarm(0);
+					refresh = 0;
         }
         if (PE1Flag){
+					PE1Flag = 0;
           if (sw_on){
             sw_on = 0;
             sw_show = time - sw_start;
@@ -250,7 +295,7 @@ int main(){
         } else {
           Face_SetTimeMS(sw_show);
         }
-        
+        Face_Out(0);
         break;
     }
     

@@ -67,6 +67,7 @@ void Face_SetLabel(char* n){
   }
   while (i < 18){
     label[i] = ' ';
+		i++;
   }
   refreshLabel = 1;
 }
@@ -153,7 +154,7 @@ static void draw_label(void){
 
 
 #define c_x 64
-#define c_y 72
+#define c_y 74
 // below was calculated using matlab and bresenham's circle algorithm
 // It is an array of x (and y) coordinates on the perimeter
 // (left to right is x, right to left is y)

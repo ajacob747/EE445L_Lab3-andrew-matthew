@@ -8,6 +8,7 @@ int PF0Flag = 0;
 int PE1Flag = 0;
 int debounce;
 extern int delay;
+extern int time;
 
 void DisableInterrupts(void);
 void EnableInterrupts(void);
@@ -42,7 +43,7 @@ void Switch_PortEInit(void){
   GPIO_PORTE_PCTL_R = 0x00000000;   // 4) PCTL GPIO on PF4-0
   GPIO_PORTE_DIR_R |= 0x00;          // 5) PF4,PF0 in, PF3-1 out
   GPIO_PORTE_AFSEL_R = 0x00;        // 6) disable alt funct on PE7-0
-  GPIO_PORTE_PUR_R |= 0x02;          // enable pull-up on PE1
+  //GPIO_PORTE_PUR_R |= 0x02;          // enable pull-up on PE1
   GPIO_PORTE_DEN_R |= 0x02;          // 7) enable digital I/O on PE1
 	GPIO_PORTE_IS_R &= ~0x02;     // (d) PE1 is edge-sensitive
 	//GPIO_PORTE_IBE_R |= 0x02;    //     PF4/F0 is not both edges
@@ -50,7 +51,7 @@ void Switch_PortEInit(void){
   GPIO_PORTE_IEV_R |= 0x02;    //     PF4/F0 falling edge event
   GPIO_PORTE_ICR_R = 0x02;      // (e) clear flag4/flag0
   GPIO_PORTE_IM_R |= 0x02;      // (f) arm interrupt on PF4/PF0
-  NVIC_PRI1_R = (NVIC_PRI1_R&0xFF00FFFF)|0x00A00000; // (g) priority 5
+  NVIC_PRI1_R = (NVIC_PRI1_R&0xFFFFFF1F)|0x000000A0; // (g) priority 5
   NVIC_EN0_R = 0x00000010;      // (h) enable interrupt 4 in NVIC
   EnableInterrupts();           // (i) Enable global Interrupt flag (I)
 }
@@ -85,10 +86,10 @@ void Timer2A_Handler(void){
 }
 
 void GPIOPortE_Handler(void){
-	if((GPIO_PORTE_RIS_R & 0x02 & debounce)){
+	if(((GPIO_PORTE_RIS_R & 0x02) && debounce)){
 		PE1Flag = 1;
-    delay = 100000;
-		GPIO_PORTF_ICR_R |= 0x02;
+    delay = time + 100000;
+		GPIO_PORTE_ICR_R |= 0x02;
 		debounce = 0;
 		TIMER2_CTL_R |= TIMER_CTL_TAEN;
 	}
@@ -98,18 +99,19 @@ void GPIOPortE_Handler(void){
 }
 
 void GPIOPortF_Handler(void){
-	GPIO_PORTF_ICR_R |= 0x10;
 	if(debounce){
 		if((GPIO_PORTF_RIS_R & 0x10)){
 				PF4Flag = 1;
-				delay = 100000;
+				delay = time + 100000;
+			  GPIO_PORTF_ICR_R |= 0x10;
 		}
 		/*else{
 			PF4Flag = 0;
 		}*/
 		if((GPIO_PORTF_RIS_R & 0x1)){
 				PF0Flag = 1;
-      delay = 100000;
+        delay = time + 100000;
+			  GPIO_PORTF_ICR_R |= 0x01;
 		}
 		debounce = 0;
 		TIMER2_CTL_R |= TIMER_CTL_TAEN;

@@ -33,10 +33,9 @@ int tm_on;
 
 int ring;
 
-
-int button1;
-int button2;
-int button3;
+extern int PF4Flag;
+extern int PF0Flag;
+extern int PE1Flag;
 
 extern uint32_t time;
 
@@ -64,14 +63,17 @@ int main(){
       if ((tm_start + tm_end)/10 == time)
         ring = 1;
     }
-    if (ring && (button1 || button2 || button3)){
+    if (ring && (PE1Flag || PF0Flag || PF4Flag)){
       ring = 0;
       Face_Ring(0);
     }
     if (ring){
       Face_Ring(time%1000 < 500);
+      if (time%1000 < 500)
+        Speaker_On();
+      else Speaker_Off();
     }
-    if (button3){
+    if (PF4Flag){
       mode = (mode + 1)%5;
       delay = 100000;
       refresh = 1;
@@ -102,22 +104,22 @@ int main(){
         }
         switch(setPhase){
           case 0: //set hour
-            if (button1) time_ofst += 3600000;
-            if (button2){
+            if (PE1Flag) time_ofst += 3600000;
+            if (PF0Flag){
               setPhase++;
               Face_SetLabel("Set Minute");
             }
             break;
           case 1: //set min
-            if (button1) time_ofst += 60000;
-            if (button2){
+            if (PE1Flag) time_ofst += 60000;
+            if (PF0Flag){
               setPhase++;
               Face_SetLabel("Set Second to 0");
             }
             break;
           case 2: //reset sec to 0
-            if (button1) time_ofst %= 60000;
-            if (button2){
+            if (PE1Flag) time_ofst %= 60000;
+            if (PF0Flag){
               setPhase++;
             }
             break;
@@ -125,11 +127,11 @@ int main(){
             if (is24Hr){
               Face_SetLabel("Show 24h time? (Y)");
             } else Face_SetLabel("Show 24h time? (N)");
-            if (button1){
+            if (PE1Flag){
               is24Hr = !is24Hr;
               Face_Set24(is24Hr);
             }
-            if (button2){
+            if (PF0Flag){
               setPhase = 0;
               Face_SetLabel("Set Hour");
             }
@@ -146,27 +148,27 @@ int main(){
         }
         switch(alarmPhase){
           case 0:
-            if (button1){
+            if (PE1Flag){
               showAlarm = !showAlarm;
               if (showAlarm) Face_SetLabel("Alarm on");
               else Face_SetLabel("Alarm off");
             }
-            if (button2){
+            if (PF0Flag){
               alarmPhase++;
               Face_SetLabel("Set Alarm Hour");
             }
             break;
           case 1:
-            if (button1){
+            if (PE1Flag){
               alarmH = alarmH % 24;
             }
-            if (button2){
+            if (PF0Flag){
               alarmPhase++;
               Face_SetLabel("Set Alarm Min");
             }
             break;
           case 2:
-            if (button1){
+            if (PE1Flag){
               alarmM = alarmM % 60;
             }
             break;
@@ -186,7 +188,7 @@ int main(){
         }
         switch(setPhase){
           case 0: //toggle timer
-            if (button1){
+            if (PE1Flag){
               tm_on = !tm_on;
               if (tm_on)
                 Face_SetLabel("Timer On");
@@ -195,26 +197,26 @@ int main(){
               }
               tm_end = tm_h * 3600000 + tm_m * 60000;
             }
-            if (button2){
+            if (PF0Flag){
               setPhase++;
               Face_SetLabel("Set Timer H");
             }
             break;
           case 1:
-            if (button1){
+            if (PE1Flag){
               tm_h = tm_h%24;
             }
-            if (button2){
+            if (PF0Flag){
               setPhase++;
               Face_SetLabel("Set Timer Hour");
             }
             tm_end = tm_h * 3600000 + tm_m * 60000;
             break;
           case 2:
-            if (button1){
+            if (PE1Flag){
               tm_m = tm_m%60;
             }
-            if (button2) {
+            if (PF0Flag) {
               setPhase++;
               Face_SetLabel("Set Timer Minute");
             }
@@ -228,7 +230,7 @@ int main(){
           Face_SetLabel("Stopwatch");
           Face_ShowAlarm(0);
         }
-        if (button1){
+        if (PE1Flag){
           if (sw_on){
             sw_on = 0;
             sw_show = time - sw_start;

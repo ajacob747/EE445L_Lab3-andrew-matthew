@@ -68,6 +68,7 @@ void Face_SetLabel(char* n){
   while (i < 18){
     label[i] = ' ';
   }
+  refreshLabel = 1;
 }
 
 // --------Face_ShowAlarm--------

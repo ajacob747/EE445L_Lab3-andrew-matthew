@@ -33,7 +33,7 @@ void Timer_Init(void){
 }
 void Timer0A_Handler(void){
 	TIMER0_ICR_R = TIMER_ICR_TATOCINT; 
-	time+=200;
+	time+=1;
 }
 
 uint32_t Timer_getTime(){

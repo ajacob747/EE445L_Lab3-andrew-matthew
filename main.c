@@ -6,6 +6,7 @@
 #include "../inc/PLL.h"
 #include "../inc/st7735.h"
 
+
 int time_ofst = 0;
 int hour;
 int minute;
@@ -18,7 +19,8 @@ extern uint32_t time;
 
 int main(){
 	PLL_Init(Bus80MHz); 
-	Switch_PortFInit();
+	Switch_PortInits();
+	Switch_TimerInit();
 	Speaker_Init();
 	Timer_Init();
   Face_Init();
@@ -35,7 +37,7 @@ int main(){
 		//if(Stopwatch Mode)		
 		flip = 1 - flip;
     if (flip) ST7735_DrawPixel(1,1,ST7735_BLACK);
-    else ST7735_DrawPixel(1,1,ST7735_BLUE);
+    else ST7735_DrawPixel(1,1,ST7735_BLUE); 
 		
 		//if(Timer Mode)
     

@@ -39,6 +39,8 @@ int button3;
 
 extern uint32_t time;
 
+#define PF2   (*((volatile uint32_t *)0x40025010))
+
 int main(){
 	PLL_Init(Bus80MHz); 
 	Switch_PortFInit();

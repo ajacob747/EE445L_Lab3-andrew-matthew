@@ -1,3 +1,3 @@
 
-void Switch_PortFInit(void);
-void GPIOPortF_Handler(void);
+void Switch_PortInits(void);
+

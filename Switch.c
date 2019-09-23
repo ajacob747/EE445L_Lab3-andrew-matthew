@@ -6,7 +6,9 @@
 int PF4Flag = 0;
 int PF0Flag = 0;
 int PE1Flag = 0;
+int debounce;
 
+void DisableInterrupts(void);
 void EnableInterrupts(void);
 
 void Switch_PortFInit(void){ 
@@ -22,7 +24,8 @@ void Switch_PortFInit(void){
   GPIO_PORTF_PUR_R = 0x11;          // enable pull-up on PF0 and PF4
   GPIO_PORTF_DEN_R = 0x1F;          // 7) enable digital I/O on PF4-0
 	GPIO_PORTF_IS_R &= ~0x11;     // (d) PF4/F0 is edge-sensitive
-  GPIO_PORTF_IBE_R &= ~0x11;    //     PF4/F0 is not both edges
+  //GPIO_PORTF_IBE_R |= 0x11;    //     PF4/F0 is both edges
+	GPIO_PORTF_IBE_R &= ~0x11;    //     PF4/F0 is not both edges
   GPIO_PORTF_IEV_R |= 0x11;    //     PF4/F0 falling edge event
   GPIO_PORTF_ICR_R = 0x11;      // (e) clear flag4/flag0
   GPIO_PORTF_IM_R |= 0x11;      // (f) arm interrupt on PF4/PF0
@@ -41,6 +44,7 @@ void Switch_PortEInit(void){
   GPIO_PORTE_PUR_R |= 0x02;          // enable pull-up on PE1
   GPIO_PORTE_DEN_R |= 0x02;          // 7) enable digital I/O on PE1
 	GPIO_PORTE_IS_R &= ~0x02;     // (d) PE1 is edge-sensitive
+	//GPIO_PORTE_IBE_R |= 0x02;    //     PF4/F0 is not both edges
   GPIO_PORTE_IBE_R &= ~0x02;    //     PE1 is not both edges
   GPIO_PORTE_IEV_R |= 0x02;    //     PF4/F0 falling edge event
   GPIO_PORTE_ICR_R = 0x02;      // (e) clear flag4/flag0
@@ -50,21 +54,62 @@ void Switch_PortEInit(void){
   EnableInterrupts();           // (i) Enable global Interrupt flag (I)
 }
 
+void Switch_TimerInit(void){
+	volatile uint32_t delay;
+  DisableInterrupts();
+  // **** general initialization ****
+  SYSCTL_RCGCTIMER_R |= 0x04;      // activate timer2
+  delay = SYSCTL_RCGCTIMER_R;      // allow time to finish activating
+  TIMER2_CTL_R &= ~TIMER_CTL_TAEN; // disable timer2A during setup
+  TIMER2_CFG_R = 0;                // configure for 32-bit timer mode
+  // **** timer2A initialization ****
+                                   // configure for periodic mode
+  TIMER2_TAMR_R = TIMER_TAMR_TAMR_PERIOD;
+  TIMER2_TAILR_R = 799999;         // start value for 100 Hz interrupts
+  TIMER2_IMR_R |= TIMER_IMR_TATOIM;// enable timeout (rollover) interrupt
+  TIMER2_ICR_R = TIMER_ICR_TATOCINT;// clear timer2A timeout flag
+  //TIMER2_CTL_R |= TIMER_CTL_TAEN;  // enable timer2A 32-b, periodic, interrupts
+  // **** interrupt initialization ****
+                                   // Timer2A=priority 2
+  NVIC_PRI5_R = (NVIC_PRI5_R&0x00FFFFFF)|0x20000000; // top 3 bits
+  NVIC_EN0_R = 1<<23;              // enable interrupt 23 in NVIC
+	debounce = 1;
+	EnableInterrupts();
+}
+
+void Timer2A_Handler(void){
+			TIMER2_ICR_R = TIMER_ICR_TATOCINT;
+			debounce = 1;
+			TIMER2_CTL_R &= ~TIMER_CTL_TAEN;
+}
+
 void GPIOPortE_Handler(void){
-	if((GPIO_PORTE_RIS_R & 0x02)){
+	if((GPIO_PORTE_RIS_R & 0x02 & debounce)){
 		PE1Flag = 1;
 		GPIO_PORTF_ICR_R |= 0x02;
+		debounce = 0;
+		TIMER2_CTL_R |= TIMER_CTL_TAEN;
 	}
+	/*else{
+		PE1Flag = 0;
+	}*/
 }
 
 void GPIOPortF_Handler(void){
-	if((GPIO_PORTF_RIS_R & 0x10)){
-			PF4Flag = 1;
-			GPIO_PORTF_ICR_R |= 0x10;
-	}
-	if((GPIO_PORTF_RIS_R & 0x1)){
-			PF0Flag = 1;
-			GPIO_PORTF_ICR_R |= 0x1;
+	GPIO_PORTF_ICR_R |= 0x10;
+	if(debounce){
+		if((GPIO_PORTF_RIS_R & 0x10)){
+				PF4Flag = 1;
+				
+		}
+		/*else{
+			PF4Flag = 0;
+		}*/
+		if((GPIO_PORTF_RIS_R & 0x1)){
+				PF0Flag = 1;
+		}
+		debounce = 0;
+		TIMER2_CTL_R |= TIMER_CTL_TAEN;
 	}
 }
 

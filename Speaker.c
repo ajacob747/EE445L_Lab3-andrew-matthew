@@ -34,7 +34,7 @@ void Speaker_TimerInit(void){
   // **** interrupt initialization ****
                                    // Timer1A=priority 2
   NVIC_PRI5_R = (NVIC_PRI5_R&0x00FFFFFF)|0x40000000; // top 3 bits
-  NVIC_EN0_R |= 1<<21;              // enable interrupt 19 in NVIC
+  NVIC_EN0_R |= 1<<21;              // enable interrupt 21 in NVIC
 	onflag = 0;
 	EnableInterrupts();
 	
@@ -42,7 +42,7 @@ void Speaker_TimerInit(void){
 
 void Timer1A_Handler(void){
 	if(onflag)
-		PE0 ^= 0x02;
+		PE0 ^= 0x01;
 }
 
 void Speaker_On(void){

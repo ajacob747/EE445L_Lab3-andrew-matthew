@@ -5,6 +5,7 @@
 
 int PF4Flag = 0;
 int PF0Flag = 0;
+int PE1Flag = 0;
 
 void EnableInterrupts(void);
 
@@ -30,6 +31,32 @@ void Switch_PortFInit(void){
   EnableInterrupts();           // (i) Enable global Interrupt flag (I)
 }
 
+void Switch_PortEInit(void){
+	SYSCTL_RCGC2_R |= 0x00000010;     // 1) activate clock for Port E
+  while((SYSCTL_PRGPIO_R&0x10)==0){}; // allow time for clock to start
+  GPIO_PORTE_AMSEL_R = 0x00;        // 3) disable analog on PE
+  GPIO_PORTE_PCTL_R = 0x00000000;   // 4) PCTL GPIO on PF4-0
+  GPIO_PORTE_DIR_R |= 0x00;          // 5) PF4,PF0 in, PF3-1 out
+  GPIO_PORTE_AFSEL_R = 0x00;        // 6) disable alt funct on PE7-0
+  GPIO_PORTE_PUR_R |= 0x02;          // enable pull-up on PE1
+  GPIO_PORTE_DEN_R |= 0x02;          // 7) enable digital I/O on PE1
+	GPIO_PORTE_IS_R &= ~0x02;     // (d) PE1 is edge-sensitive
+  GPIO_PORTE_IBE_R &= ~0x02;    //     PE1 is not both edges
+  GPIO_PORTE_IEV_R |= 0x02;    //     PF4/F0 falling edge event
+  GPIO_PORTE_ICR_R = 0x02;      // (e) clear flag4/flag0
+  GPIO_PORTE_IM_R |= 0x02;      // (f) arm interrupt on PF4/PF0
+  NVIC_PRI1_R = (NVIC_PRI1_R&0xFF00FFFF)|0x00A00000; // (g) priority 5
+  NVIC_EN0_R = 0x00000010;      // (h) enable interrupt 4 in NVIC
+  EnableInterrupts();           // (i) Enable global Interrupt flag (I)
+}
+
+void GPIOPortE_Handler(void){
+	if((GPIO_PORTE_RIS_R & 0x02)){
+		PE1Flag = 1;
+		GPIO_PORTF_ICR_R |= 0x02;
+	}
+}
+
 void GPIOPortF_Handler(void){
 	if((GPIO_PORTF_RIS_R & 0x10)){
 			PF4Flag = 1;
@@ -39,4 +66,9 @@ void GPIOPortF_Handler(void){
 			PF0Flag = 1;
 			GPIO_PORTF_ICR_R |= 0x1;
 	}
+}
+
+void Switch_PortInits(void){
+		Switch_PortFInit();
+		Switch_PortFInit();
 }

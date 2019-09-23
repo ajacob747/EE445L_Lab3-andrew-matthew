@@ -45,10 +45,9 @@ extern uint32_t time;
 int main(){
 	PLL_Init(Bus80MHz); 
 	Switch_PortInits();
-<<<<<<< HEAD
+
 	Switch_TimerInit();
-=======
->>>>>>> c1fe5720445802a964127ee935359a94169d03c2
+
 	Speaker_Init();
 	Timer_Init();
   Face_Init();
@@ -59,20 +58,7 @@ int main(){
   is24Hr = 0;
   ring = 0;
 	while(1){
-<<<<<<< HEAD
-		//if(Clock Mode)
-    int ttime = time_ofst + time;
-    ms = ttime%1000;
-    second = (ttime/1000)%60;
-    minute = (ttime/60000)%60;
-    hour = (ttime/3600000)%24;
-    Face_SetTime(hour,minute,second,ms);
-    Face_Out();
-		//if(Stopwatch Mode)		
-		flip = 1 - flip;
-    if (flip) ST7735_DrawPixel(1,1,ST7735_BLACK);
-    else ST7735_DrawPixel(1,1,ST7735_BLUE); 
-=======
+
     PF2 ^= PF2;
     if (showAlarm){
       if (alarmH == (time+time_ofst)%3600000 && alarmM == (time+time_ofst)%60000 && (time+time_ofst)%1000 < 500)
@@ -269,7 +255,7 @@ int main(){
     }
     
 		//if(Stopwatch Mode)
->>>>>>> c1fe5720445802a964127ee935359a94169d03c2
+
 		
 		//if(Timer Mode)
     

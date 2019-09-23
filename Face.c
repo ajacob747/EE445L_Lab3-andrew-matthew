@@ -78,6 +78,7 @@ void Face_SetLabel(char* n){
 // Output:  none
 void Face_ShowAlarm(int on){
   showAlarm = on;
+  refreshAlarm = 1;
 }
 
 // --------Face_SetAlarm--------
@@ -165,8 +166,8 @@ static void draw_label(void){
 // radius 55
 const char bc[] = {55 ,55 ,55 ,55 ,55 ,55 ,54 ,54 ,54 ,54 ,54 ,53 ,53 ,53 ,53 ,52 ,52 ,52 ,51 ,51 ,50 ,50 ,49 ,49 ,48 ,48 ,47 ,47 ,46 ,45 ,45 ,44 ,43 ,42 ,41 ,40 ,39 ,38 ,37 ,36 ,35 ,34 ,33 ,32 ,31 ,30 ,29 ,28 ,27 ,26 ,25 ,24 ,23 ,22 ,21 ,20 ,19 ,18 ,17 ,16 ,15 ,14 ,13 ,12 ,11 ,10 ,9 ,8 ,7 ,6 ,5 ,4 ,3 ,2 ,1 ,0, -1};
 
-const char numx[] = {0, 11, 12, 13, 12, 11, 10, 9, 8, 7, 8, 9, 10};
-const char numy[] = {0, 4, 5, 6, 7, 8, 9, 8, 7, 6, 5, 4, 3};
+const char numx[] = {0,14,17,18,17,14,10, 6, 3, 2, 3, 6,10};
+const char numy[] = {0, 3, 5, 7, 9,11,12,11, 9, 7, 5, 3, 2};
 char buff[3];
   
 void draw_face(void){
@@ -188,7 +189,7 @@ void draw_face(void){
       x++;
       y--;
     }
-    for (int i = 1; i < 12; i++){
+    for (int i = 1; i < 13; i++){
       sprintf(buff, "%d", i);
       ST7735_DrawString(numx[i],numy[i],buff,clock_outline);
     }
@@ -261,8 +262,8 @@ static void draw_hands(void){
   int hourA = (hour%12)*5 * 6 + min / 2;
   int minA = min * 6 + sec / 10;
   int secA = sec * 6 + (ms * 3) / 500;
-  int alarmA = (alarmH % 12) * 6 + alarmM / 10;
-  if (refreshAlarm || alarmA != lastAlarm){
+  int alarmA = (alarmH % 12) * 5 * 6 + alarmM / 2;
+  if (showAlarm && (refreshAlarm || alarmA != lastAlarm)){
     if (overlap(lastAlarm, lastHour)) refreshHour = 1;
     if (overlap(lastAlarm, lastMin)) refreshMin = 1;
     if (overlap(lastAlarm, lastSec)) refreshSec = 1;
@@ -419,16 +420,16 @@ static void draw_seconds(void) {
 static int isDrawn;
 static void draw_alarm(void) {
   if(ring && !isDrawn){
-    ST7735_DrawFastHLine(0,0,129,ST7735_RED);
-    ST7735_DrawFastVLine(0,0,161,ST7735_RED);
-    ST7735_DrawFastHLine(128,0,161,ST7735_RED);
-    ST7735_DrawFastVLine(0,160,129,ST7735_RED);
+    ST7735_DrawFastHLine(0,0,128,ST7735_RED);
+    ST7735_DrawFastVLine(0,0,160,ST7735_RED);
+    ST7735_DrawFastHLine(0,159,128,ST7735_RED);
+    ST7735_DrawFastVLine(127,0,160,ST7735_RED);
     isDrawn = 1;
   } else if (!ring && isDrawn){
-    ST7735_DrawFastHLine(0,0,129,ST7735_BLACK);
-    ST7735_DrawFastVLine(0,0,161,ST7735_BLACK);
-    ST7735_DrawFastHLine(128,0,161,ST7735_BLACK);
-    ST7735_DrawFastVLine(0,160,129,ST7735_BLACK);
+    ST7735_DrawFastHLine(0,0,126,ST7735_BLACK);
+    ST7735_DrawFastVLine(0,0,158,ST7735_BLACK);
+    ST7735_DrawFastHLine(0,159,128,ST7735_BLACK);
+    ST7735_DrawFastVLine(127,0,160,ST7735_BLACK);
     isDrawn = 0;
   }
 }

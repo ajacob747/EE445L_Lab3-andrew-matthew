@@ -51,6 +51,7 @@ int main(){
 	Switch_TimerInit();
 
 	Speaker_Init();
+  Speaker_TimerInit();
 	Timer_Init();
   Face_Init();
   mode = 0;
@@ -64,12 +65,14 @@ int main(){
 
     PF2 ^= 0x04;
     if (showAlarm){
-      if (alarmH == (time+time_ofst)%3600000 && alarmM == (time+time_ofst)%60000 && (time+time_ofst)%1000 < 500)
+      if (alarmH == ((time+time_ofst)/3600000)%24 && alarmM == ((time+time_ofst)/60000)%60 && (time + time_ofst)%60000 == 0 && (time+time_ofst)%1000 < 500)
         ring = 1;
     }
     if (tm_on){
-      if ((tm_start + tm_end)/10 == time)
+      if ((tm_start + tm_end) < time){
+        tm_on = 0;
         ring = 1;
+      }
     }
     if (ring && (PE1Flag || PF0Flag || PF4Flag)){
 			PE1Flag = 0;
@@ -180,7 +183,9 @@ int main(){
             if (PE1Flag){
 							PE1Flag = 0;
               showAlarm = !showAlarm;
-              if (showAlarm) Face_SetLabel("Alarm on");
+              if (showAlarm){
+                Face_SetLabel("Alarm on");
+              }
               else Face_SetLabel("Alarm off");
             }
             if (PF0Flag){
@@ -221,9 +226,9 @@ int main(){
         if (refresh){
           if (tm_on){
             Face_SetLabel("Timer On");
-            tm_start = time;
           }
           else Face_SetLabel("Timer Off");
+          Face_Set24(1);
           Face_ShowAlarm(0);
           setPhase = 0;
 					refresh = 0;
@@ -233,8 +238,10 @@ int main(){
             if (PE1Flag){
 							PE1Flag = 0;
               tm_on = !tm_on;
-              if (tm_on)
+              if (tm_on){
                 Face_SetLabel("Timer On");
+                tm_start = time;
+              }
               else{
                 Face_SetLabel("Timer Off");
               }
@@ -243,35 +250,36 @@ int main(){
             if (PF0Flag){
 							PF0Flag = 0;
               setPhase++;
-              Face_SetLabel("Set Timer H");
+              Face_SetLabel("Set Timer Hour");
             }
             break;
           case 1:
             if (PE1Flag){
 							PE1Flag = 0;
-              tm_h = tm_h%24;
+              tm_h = (tm_h + 1)%24;
             }
             if (PF0Flag){
-							PF0Flag = 0;
-              setPhase++;
-              Face_SetLabel("Set Timer Hour");
-            }
-            tm_end = tm_h * 3600000 + tm_m * 60000;
-            break;
-          case 2:
-            if (PE1Flag){
-							PE1Flag = 0;
-              tm_m = tm_m%60;
-            }
-            if (PF0Flag) {
 							PF0Flag = 0;
               setPhase++;
               Face_SetLabel("Set Timer Minute");
             }
             tm_end = tm_h * 3600000 + tm_m * 60000;
             break;
+          case 2:
+            if (PE1Flag){
+							PE1Flag = 0;
+              tm_m = (tm_m + 1)%60;
+            }
+            if (PF0Flag) {
+							PF0Flag = 0;
+              setPhase = 0;
+              refresh = 1;
+            }
+            tm_end = tm_h * 3600000 + tm_m * 60000;
+            break;
         }
-        Face_SetTimeMS(time - (tm_start + tm_end));
+        if (tm_on) Face_SetTimeMS(tm_start + tm_end - time);
+        else Face_SetTimeMS(tm_end);
 				Face_Out(0);
         break;
       case 4: 
@@ -288,7 +296,7 @@ int main(){
             Face_SetTimeMS(sw_show);
           } else {
             sw_start = time;
-            
+            sw_on = 1;
           }
         }
         if (sw_on){

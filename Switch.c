@@ -148,4 +148,6 @@ void Switch_Read(void){
 	} else if (f4last == 1 && (GPIO_PORTF_DATA_R & 0x10)){
 		f4last = 0;
 	}
+  
+  delay = time + 100000;
 }

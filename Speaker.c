@@ -20,7 +20,7 @@ void Speaker_TimerInit(void){
 	volatile uint32_t delay;
   DisableInterrupts();
   // **** general initialization ****
-  SYSCTL_RCGCTIMER_R |= 0x01;      // activate timer1
+  SYSCTL_RCGCTIMER_R |= 0x02;      // activate timer1
   delay = SYSCTL_RCGCTIMER_R;      // allow time to finish activating
   TIMER1_CTL_R &= ~TIMER_CTL_TAEN; // disable timer1A during setup
   TIMER1_CFG_R = 0;                // configure for 32-bit timer mode
@@ -33,7 +33,7 @@ void Speaker_TimerInit(void){
   TIMER1_CTL_R |= TIMER_CTL_TAEN;  // enable timer1A 32-b, periodic, interrupts
   // **** interrupt initialization ****
                                    // Timer1A=priority 2
-  NVIC_PRI5_R = (NVIC_PRI5_R&0x00FFFFFF)|0x40000000; // top 3 bits
+  NVIC_PRI5_R = (NVIC_PRI5_R&0xFFFF1FFF)|0x00004000; // top 3 bits
   NVIC_EN0_R |= 1<<21;              // enable interrupt 21 in NVIC
 	onflag = 0;
 	EnableInterrupts();
@@ -41,6 +41,7 @@ void Speaker_TimerInit(void){
 }
 
 void Timer1A_Handler(void){
+  TIMER1_ICR_R = TIMER_ICR_TATOCINT;
 	if(onflag)
 		PE0 ^= 0x01;
 }

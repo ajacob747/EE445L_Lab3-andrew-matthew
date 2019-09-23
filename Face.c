@@ -22,21 +22,21 @@ static int hour;
 static int min;
 static int sec;
 static int ms;
+static int showAlarm;
 static int alarmH;
 static int alarmM;
+static int ring;
 static short twentyFourHour = 0;
 
 #define GRAY 0x2104
 // current clock colors
-static int clock_bg = ST7735_BLUE;
-static int clock_outline = ST7735_RED;
-static int clock_hand = ST7735_BLACK;
+static int clock_bg = ST7735_BLACK;
+static int clock_outline = ST7735_WHITE;
+static int clock_hand = ST7735_WHITE;
 static int clock_alarm = ST7735_RED;
 
 static int seg_on = ST7735_YELLOW;
 static int seg_off = GRAY;
-
-void draw_face(void);
 
 // --------Face_Init--------
 // Initializes clock face, clears screen, draws clock
@@ -52,8 +52,7 @@ void Face_Init(void){
   refreshFace = 1;
   label[18] = '\0';
   ST7735_InitR(INITR_REDTAB);
-  Output_Clear();
-  draw_face();
+  Face_Out(1);
 }
 
 // --------Face_SetLabel--------
@@ -69,6 +68,7 @@ void Face_SetLabel(char* n){
   while (i < 18){
     label[i] = ' ';
   }
+  refreshLabel = 1;
 }
 
 // --------Face_ShowAlarm--------
@@ -76,6 +76,7 @@ void Face_SetLabel(char* n){
 // Input:   on  Boolean (true to show)
 // Output:  none
 void Face_ShowAlarm(int on){
+  showAlarm = on;
 }
 
 // --------Face_SetAlarm--------
@@ -87,6 +88,14 @@ void Face_ShowAlarm(int on){
 void Face_SetAlarm(int h, int m){
   alarmH = h;
   alarmM = m;
+}
+
+// --------Face_Ring--------
+// Sets whether the clock is ringing (timer and alarm)
+// Input:   on   Boolean (true to ring)
+// Output:  none
+void Face_Ring(int on){
+  ring = on;
 }
 
 // --------Face_SetTime--------
@@ -104,12 +113,24 @@ void Face_SetTime(int h, int m, int s, int millis){
   ms = millis;
 }
 
+// --------Face_SetTimeMS--------
+// Sets current time for face to display, takes in one input (MS) and converts to HMS/MS
+// Input:   milss    milisecond
+// Output:  none
+void Face_SetTimeMS(int mils){
+  ms = mils%1000;
+  sec = (mils/1000)%60;
+  min = (mils/60000)%60;
+  hour = (mils/3600000)%24;
+}
+
 // --------Face_Set24--------
 // Sets face to 24 hr mode (uses 00-23 hour display instead of 12-11 with AM/PM dot)
 // Input:   on true to turn on 24 hr mode, false to use 12 hr
 // Output:  none
 
 void Face_Set24(int on){
+  twentyFourHour = on;
 }
 
 
@@ -142,8 +163,13 @@ static void draw_label(void){
 
 // radius 55
 const char bc[] = {55 ,55 ,55 ,55 ,55 ,55 ,54 ,54 ,54 ,54 ,54 ,53 ,53 ,53 ,53 ,52 ,52 ,52 ,51 ,51 ,50 ,50 ,49 ,49 ,48 ,48 ,47 ,47 ,46 ,45 ,45 ,44 ,43 ,42 ,41 ,40 ,39 ,38 ,37 ,36 ,35 ,34 ,33 ,32 ,31 ,30 ,29 ,28 ,27 ,26 ,25 ,24 ,23 ,22 ,21 ,20 ,19 ,18 ,17 ,16 ,15 ,14 ,13 ,12 ,11 ,10 ,9 ,8 ,7 ,6 ,5 ,4 ,3 ,2 ,1 ,0, -1};
+
+const char numx[] = {0, 11, 12, 13, 12, 11, 10, 9, 8, 7, 8, 9, 10};
+const char numy[] = {0, 4, 5, 6, 7, 8, 9, 8, 7, 6, 5, 4, 3};
+char buff[3];
+  
 void draw_face(void){
-  if (refreshFace || 1){
+  if (refreshFace){
     int x = 0;
     int y = strlen(bc);
     int limit = y;
@@ -161,6 +187,11 @@ void draw_face(void){
       x++;
       y--;
     }
+    for (int i = 1; i < 12; i++){
+      sprintf(buff, "%d", i);
+      ST7735_DrawString(numx[i],numy[i],buff,clock_outline);
+    }
+    refreshFace = 0;
   }
 }
 
@@ -235,7 +266,8 @@ static void draw_hands(void){
     if (overlap(lastAlarm, lastMin)) refreshMin = 1;
     if (overlap(lastAlarm, lastSec)) refreshSec = 1;
     hand_helper(s_arr, lastAlarm, clock_bg);
-    hand_helper(s_arr, alarmA, clock_alarm);
+    if (showAlarm)
+      hand_helper(s_arr, alarmA, clock_alarm);
     lastAlarm = alarmA;
     refreshAlarm = 0;
   }
@@ -324,12 +356,20 @@ static void draw_7seg(void){
     else
       ST7735_DrawPixel(ofst - 2, SEG_Y + 9, seg_off);
     print = (hour%12) / 10;
+    if (!(hour%12)) print = 1; // print 12 instead of 0
     if (!print) print = 10; //10 is special case blank digit
   }
   seg_help(ofst, SEG_Y, print, seg_on, seg_off);
   ofst += SEGLENGTH + 4;
   
-  print = hour % 10;
+  if (twentyFourHour)
+    print = hour % 10;
+  else{
+    if (!(hour%12))
+      print = 2;
+    else
+      print = (hour % 12) % 10;
+  }
   seg_help(ofst, SEG_Y, print, seg_on, seg_off);
   ofst += SEGLENGTH + 2;
   
@@ -375,14 +415,41 @@ static void draw_7seg(void){
 static void draw_seconds(void) {
 }
 
+static int isDrawn;
+static void draw_alarm(void) {
+  if(ring && !isDrawn){
+    ST7735_DrawFastHLine(0,0,129,ST7735_RED);
+    ST7735_DrawFastVLine(0,0,161,ST7735_RED);
+    ST7735_DrawFastHLine(128,0,161,ST7735_RED);
+    ST7735_DrawFastVLine(0,160,129,ST7735_RED);
+    isDrawn = 1;
+  } else if (!ring && isDrawn){
+    ST7735_DrawFastHLine(0,0,129,ST7735_BLACK);
+    ST7735_DrawFastVLine(0,0,161,ST7735_BLACK);
+    ST7735_DrawFastHLine(128,0,161,ST7735_BLACK);
+    ST7735_DrawFastVLine(0,160,129,ST7735_BLACK);
+    isDrawn = 0;
+  }
+}
+
 // --------Face_Out--------
 // Prints to screen
-// Input:   none
+// Input:   clear   Whether or not screen needs to be cleared first (if transitioning in from a menu)
 // Output:  none
 
-void Face_Out(void){
-  //draw_label();
+void Face_Out(int clear){
+  if(clear){
+    Output_Clear();
+    refreshFace = 1;
+    refreshHour = 1;
+    refreshMin = 1;
+    refreshSec = 1;
+    refreshAlarm = 1;
+  }
+  draw_label();
+  draw_face();
   draw_hands();
   draw_7seg();
+  draw_alarm();
   //draw_seconds();
 }

@@ -7,6 +7,7 @@ int PF4Flag = 0;
 int PF0Flag = 0;
 int PE1Flag = 0;
 int debounce;
+extern int delay;
 
 void DisableInterrupts(void);
 void EnableInterrupts(void);
@@ -86,6 +87,7 @@ void Timer2A_Handler(void){
 void GPIOPortE_Handler(void){
 	if((GPIO_PORTE_RIS_R & 0x02 & debounce)){
 		PE1Flag = 1;
+    delay = 100000;
 		GPIO_PORTF_ICR_R |= 0x02;
 		debounce = 0;
 		TIMER2_CTL_R |= TIMER_CTL_TAEN;
@@ -100,13 +102,14 @@ void GPIOPortF_Handler(void){
 	if(debounce){
 		if((GPIO_PORTF_RIS_R & 0x10)){
 				PF4Flag = 1;
-				
+				delay = 100000;
 		}
 		/*else{
 			PF4Flag = 0;
 		}*/
 		if((GPIO_PORTF_RIS_R & 0x1)){
 				PF0Flag = 1;
+      delay = 100000;
 		}
 		debounce = 0;
 		TIMER2_CTL_R |= TIMER_CTL_TAEN;

@@ -141,7 +141,7 @@ int main(){
             break;
           case 2: //reset sec to 0
             if (PE1Flag){
-							time_ofst %= 60000;
+							time_ofst = (time + time_ofst)/60000 * 60000 - time;
 							PE1Flag = 0;
 						}
             if (PF0Flag){
@@ -214,6 +214,7 @@ int main(){
             break;
         }
         Face_SetTime(alarmH,alarmM,0,0);
+				Face_SetAlarm(alarmH,alarmM);
         Face_Out(0);
         break;
       case 3:

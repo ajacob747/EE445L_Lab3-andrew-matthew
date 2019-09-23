@@ -70,5 +70,5 @@ void GPIOPortF_Handler(void){
 
 void Switch_PortInits(void){
 		Switch_PortFInit();
-		Switch_PortFInit();
+		Switch_PortEInit();
 }

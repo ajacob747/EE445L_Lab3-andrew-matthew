@@ -26,7 +26,7 @@ void Timer_Init(void){
   // **** interrupt initialization ****
                                    // Timer0A=priority 2
   NVIC_PRI4_R = (NVIC_PRI4_R&0x00FFFFFF)|0x40000000; // top 3 bits
-  NVIC_EN0_R = 1<<19;              // enable interrupt 19 in NVIC
+  NVIC_EN0_R |= 1<<19;              // enable interrupt 19 in NVIC
 	time = 0;
 	EnableInterrupts();
 

@@ -27,7 +27,7 @@ void Speaker_TimerInit(void){
   // **** timer0A initialization ****
                                    // configure for periodic mode
   TIMER1_TAMR_R = TIMER_TAMR_TAMR_PERIOD;
-  TIMER1_TAILR_R = 181818;         // start value for 440 Hz interrupts
+  TIMER1_TAILR_R = 45455;         // start value for 440 Hz interrupts
   TIMER1_IMR_R |= TIMER_IMR_TATOIM;// enable timeout (rollover) interrupt
   TIMER1_ICR_R = TIMER_ICR_TATOCINT;// clear timer1A timeout flag
   TIMER1_CTL_R |= TIMER_CTL_TAEN;  // enable timer1A 32-b, periodic, interrupts
@@ -43,7 +43,8 @@ void Speaker_TimerInit(void){
 void Timer1A_Handler(void){
   TIMER1_ICR_R = TIMER_ICR_TATOCINT;
 	if(onflag)
-		PE0 ^= 0x01;
+		GPIO_PORTE_DATA_R ^= 0x01;
+		//PE0 ^= 0x01;
 }
 
 void Speaker_On(void){

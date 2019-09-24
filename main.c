@@ -65,7 +65,7 @@ int main(){
 
     PF2 ^= 0x04;
     if (showAlarm){
-      if (alarmH == ((time+time_ofst)/3600000)%24 && alarmM == ((time+time_ofst)/60000)%60 && (time + time_ofst)%60000 == 0 && (time+time_ofst)%1000 < 500)
+      if (alarmH == ((time+time_ofst)/3600000)%24 && alarmM == ((time+time_ofst)/60000)%60 && (time + time_ofst)%60000 <= 10 && (time+time_ofst)%1000 < 500)
         ring = 1;
     }
     if (tm_on){
@@ -79,6 +79,7 @@ int main(){
 			PF0Flag = 0;
 			PF4Flag = 0;
       ring = 0;
+			Speaker_Off();
       Face_Ring(0);
     }
     if (ring){
@@ -89,7 +90,7 @@ int main(){
     }
     if (PF4Flag){
       mode = (mode + 1)%5;
-      delay = 100000;
+      delay = time + 100000;
       refresh = 1;
 			PF4Flag = 0;
     }
